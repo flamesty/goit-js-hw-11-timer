@@ -1,83 +1,72 @@
-// Создай плагин настраиваемого таймера, который ведет обратный отсчет до предварительно определенной даты.
-// Такой плагин может использоваться в блогах и интернет-магазинах, страницах регистрации событий,
-// во время технического обслуживания и т. д.
+//Timer
 
 class CountdownTimer {
     constructor({ selector, targetDate }) {
         this.selector = selector;
-        this.targetDate = targetDate;
+        this.targerDate = targetDate;
+        const targetDateForTimer = new Date(targetDate);
+        let unixTargetTime = targetDateForTimer.getTime();
+        this.template = `
+        
+        <div class="field">
+            <span class="value" data-value="days">11</span>
+            <span class="label">Day</span>
+        </div>
+    
+        <div class="field">
+            <span class="value" data-value="hours">11</span>
+            <span class="label">Hours</span>
+        </div>
+    
+        <div class="field">
+            <span class="value" data-value="mins">11</span>
+            <span class="label">Minutes</span>
+        </div>
+    
+        <div class="field">
+            <span class="value" data-value="secs">11</span>
+            <span class="label">Seconds</span>
+        </div>`;
+
+        this.root = document.querySelector(this.selector);
+        this.root.insertAdjacentHTML('beforeend', this.template);
         this.refs = {
-            daysSpan: document.querySelector('span[data-value="days"]'),
-            hoursSpan: document.querySelector('span[data-value="hours"]'),
-            minutesSpan: document.querySelector('span[data-value="mins"]'),
-            secondsSpan: document.querySelector('span[data-value="secs"]'),
+            days: this.root.querySelector("span[data-value='days']"),
+            hours: this.root.querySelector("span[data-value='hours']"),
+            minutes: this.root.querySelector("span[data-value='mins']"),
+            seconds: this.root.querySelector("span[data-value='secs']")
         };
 
-        this.startTimer = function () {
-            const remainingTime =
-                Date.parse(this.targetDate) - Date.parse(new Date());
-            const convertedRemainingData = this.convertTimeStandartValues(
-                remainingTime,
-            );
-            this.updateFrontRepresentation(convertedRemainingData);
+        function timeCalc(currentTime, refs) {
+            refs.days.textContent = Math.floor(currentTime / (1000 * 60 * 60 * 24));
+            refs.hours.textContent = Math.floor(currentTime % (1000 * 60 * 60 * 24) / (1000 * 60 * 60));
+            refs.minutes.textContent = Math.floor(currentTime % (1000 * 60 * 60) / (1000 * 60));
+            refs.seconds.textContent = Math.floor(currentTime % (1000 * 60) / 1000);
+        };
+        function deltaTime(targetDate, nowTime) {
+            return targetDate - nowTime;
         };
 
-        this.convertTimeStandartValues = function (remainingTimeInMilliseconds) {
-            const secs = Math.floor(
-                (remainingTimeInMilliseconds % (1000 * 60)) / 1000,
-            );
-            const mins = Math.floor(
-                (remainingTimeInMilliseconds % (1000 * 60 * 60)) / (1000 * 60),
-            );
-            const hours = Math.floor(
-                (remainingTimeInMilliseconds % (1000 * 60 * 60 * 24)) /
-                (1000 * 60 * 60),
-            );
-            const days = Math.floor(
-                remainingTimeInMilliseconds / (1000 * 60 * 60 * 24),
-            );
-            return {
-                remainingTime: remainingTimeInMilliseconds,
-                days: days,
-                hours: hours,
-                minutes: mins,
-                seconds: secs,
-            };
-        };
+        const startTimeRef = new Date();
+        let difStartTime = deltaTime(targetDateForTimer, startTimeRef);
+        timeCalc(difStartTime, this.refs);
 
-        this.updateFrontRepresentation = function (convertRemainingTimeData) {
-            let tmpRamainingDataObj = convertRemainingTimeData;
-            let intervalId = setInterval(() => {
-                (this.refs.daysSpan.innerHTML = this.pad(tmpRamainingDataObj.days)),
-                    (this.refs.hoursSpan.innerHTML = this.pad(tmpRamainingDataObj.hours)),
-                    (this.refs.minutesSpan.innerHTML = this.pad(tmpRamainingDataObj.minutes)),
-                    (this.refs.secondsSpan.innerHTML = this.pad(tmpRamainingDataObj.seconds));
-
-                tmpRamainingDataObj = this.convertTimeStandartValues(
-                    tmpRamainingDataObj.remainingTime - 1000,
-                );
-
-                if (tmpRamainingDataObj.remainingTime < 0) {
-                    clearInterval(intervalId);
-                }
-            }, 1000);
-        };
-
-        this.pad = function (value) {
-            return String(value).padStart(2, '0');
-        };
+        const timerRef = setInterval(() => {
+            if (unixTargetTime > 0) {
+                const date = new Date();
+                let nowTimeRef = date.getTime()
+                let difTimeNow = deltaTime(unixTargetTime, nowTimeRef);
+                timeCalc(difTimeNow, this.refs);
+            } else {
+                console.log('Відлік завершено або дата задана в минулому!!!');
+                clearInterval(timerRef);
+            }
+        }, 1000);
     }
-}
+};
 
-// Comment: new Date(year, month, date, hours, minutes, seconds, ms)
-// let timer01 = new CountdownTimer({
-//   selector: '#timer-1',
-//   targetDate: new Date(2019, 5, 28, 15, 55, 40, 0),
-// });
 
-let timer01 = new CountdownTimer({
+const timer = new CountdownTimer({
     selector: '#timer-1',
-    targetDate: new Date('Jul 12, 2021'),
+    targetDate: new Date('Octo 25, 2021'),
 });
-
-timer01.startTimer();
